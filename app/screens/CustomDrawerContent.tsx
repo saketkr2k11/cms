@@ -6,16 +6,14 @@ import {
 import _ from 'lodash';
 import React from 'react';
 import {useSelector} from 'react-redux';
-import {AppData} from '../lib/types';
-import {RootState} from '../store/configureStore';
+import {Category} from '../lib/types';
+import {getCategories} from '../selectors';
 
 export default function CustomDrawerContent(
   props: DrawerContentComponentProps,
 ) {
-  const storeData: AppData = useSelector((state: RootState) => state.appData);
-  const categoriesList = _.isEmpty(storeData?.categories)
-    ? []
-    : Object.keys(storeData?.categories);
+  const categories: Record<string, Category> = useSelector(getCategories);
+  const categoriesList = _.isEmpty(categories) ? [] : Object.keys(categories);
   return (
     <DrawerContentScrollView {...props}>
       <DrawerItem
@@ -25,12 +23,12 @@ export default function CustomDrawerContent(
       {categoriesList.map(categoryId => (
         <DrawerItem
           key={categoryId}
-          label={storeData.categories[categoryId].title}
+          label={categories[categoryId].title}
           onPress={() =>
             props?.navigation?.navigate('CategoryListView', {
               categoryId,
-              name: storeData.categories[categoryId].title,
-              titleField: storeData.categories[categoryId].titleField,
+              name: categories[categoryId].title,
+              titleField: categories[categoryId].titleField,
             })
           }
         />

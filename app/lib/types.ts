@@ -9,8 +9,8 @@ export type NavigatorParams = {
 };
 
 export type DataTypeModel = {
-  dataType: DataType;
-  title: string;
+  dataType: string;
+  title: string | null;
 };
 
 export type AttributesMap = Record<string, DataTypeModel>;
@@ -42,3 +42,17 @@ export type AppData = {
   attributesMap: AttributesMap;
   subItems: Record<string, AttributesValueMap>;
 };
+
+export interface ITypography {
+  fontSize: {
+    tiny: number; //10
+    normal: number; //12
+    small: number; //14
+    medium: number; //16
+    average: number; //18
+    big: number; //20
+    title: number; //24
+    subTitle: number; //32
+    hero: number; //40
+  };
+}

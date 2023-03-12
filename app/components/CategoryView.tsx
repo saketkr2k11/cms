@@ -1,5 +1,5 @@
 import {Image, Pressable, StyleSheet, Text, View} from 'react-native';
-import React from 'react';
+import React, {useCallback} from 'react';
 import {AttributesMap, Category} from '../lib/types';
 import {TextInput} from 'react-native-paper';
 import {useDispatch} from 'react-redux';
@@ -15,7 +15,8 @@ import {
 import {Colors} from '../lib/constants';
 import {FlatList} from 'react-native-gesture-handler';
 import AddNewFieldMenu, {Menu} from './AddNewFieldMenu';
-import {isTablet} from 'react-native-device-info';
+import dimensions, {isTablet} from '../utility/dimensions';
+import {typography} from '../utility/typography';
 
 type Props = {
   category: Category;
@@ -34,6 +35,24 @@ const CategoryView = (props: Props) => {
   const {title} = category;
   const dispatch = useDispatch();
 
+  const textChange = (text: string, attributeId: string) => {
+    dispatch(updateAttributeTitle(text, attributeId, category.id));
+  };
+
+  const onAddNewField = (
+    newType: string,
+    dataType: string,
+    attributeId: string,
+  ) => {
+    if (newType !== dataType) {
+      dispatch(updateAttributeDataType(newType, attributeId, category.id));
+    }
+  };
+
+  const deletePress = (attributeId: string) => {
+    dispatch(deleteAttribute(attributeId, category.id));
+  };
+
   const renderAttributes = ({item}: {item: string}) => {
     //item == attribute id
     const attributeField = attributesMap[item];
@@ -42,25 +61,22 @@ const CategoryView = (props: Props) => {
         <TextInput
           label="field"
           mode="outlined"
-          value={attributeField.title}
+          value={attributeField?.title || ''}
           style={styles.flex}
-          onChangeText={text =>
-            dispatch(updateAttributeTitle(text, item, category.id))
-          }
+          onChangeText={text => textChange(text, item)}
         />
         <AddNewFieldMenu
           labelStyle={styles.addNewAttributeBtn}
-          viewstyle={styles.addBtn}
+          viewstyle={styles.addBtn2}
           title={attributeField.dataType}
           menus={DATA_FIELDS}
-          onPress={newType => {
-            if (newType !== attributeField.dataType) {
-              dispatch(updateAttributeDataType(newType, item, category.id));
-            }
-            return;
-          }}
+          onPress={newType =>
+            onAddNewField(newType, attributeField.dataType, item)
+          }
         />
-        <Pressable onPress={() => dispatch(deleteAttribute(item, category.id))}>
+        <Pressable
+          onPress={() => deletePress(item)}
+          style={styles.fieldDeletedIconView}>
           <Image
             source={require('../images/delete.png')}
             style={styles.fieldDeletedIcon}
@@ -80,13 +96,26 @@ const CategoryView = (props: Props) => {
   const getTitleFieldDateField = () => {
     const items: Menu[] = [];
     category.attributesIdsList.forEach(attributeId => {
-      items.push({
-        internalValue: attributeId,
-        displayText: attributesMap[attributeId].title,
-      });
+      if (attributesMap[attributeId]?.title) {
+        items.push({
+          internalValue: attributeId,
+          displayText: attributesMap[attributeId]?.title || '',
+        });
+      }
     });
     return items;
   };
+
+  const doUpdateCategoryTitle = (value: string) => {
+    dispatch(updateCategoryTitle(value, category.id));
+  };
+
+  const doAddNewAttribute = useCallback(
+    (type: string) => {
+      dispatch(addNewAttribute(category.id, type));
+    },
+    [category.id, dispatch],
+  );
 
   return (
     <View style={styles.main}>
@@ -96,7 +125,7 @@ const CategoryView = (props: Props) => {
         label="Category name"
         mode="outlined"
         value={title}
-        onChangeText={text => dispatch(updateCategoryTitle(text, category.id))}
+        onChangeText={text => doUpdateCategoryTitle(text)}
       />
       <FlatList
         data={category?.attributesIdsList || []}
@@ -117,12 +146,11 @@ const CategoryView = (props: Props) => {
           viewstyle={styles.addBtn}
           title="ADD NEW FIELD"
           menus={DATA_FIELDS}
-          onPress={type => {
-            dispatch(addNewAttribute(category.id, type));
-          }}
+          onPress={type => doAddNewAttribute(type)}
         />
         <Pressable
           style={styles.row}
+          hitSlop={{left: 20, right: 20, top: 20, bottom: 20}}
           onPress={() => dispatch(deleteCategory(category.id))}>
           <Image
             source={require('../images/delete.png')}
@@ -135,64 +163,90 @@ const CategoryView = (props: Props) => {
   );
 };
 
-export default CategoryView;
+function propsAreEqual(prev: Props, next: Props) {
+  return (
+    JSON.stringify(prev.attributesMap) === JSON.stringify(next.attributesMap) &&
+    JSON.stringify(prev.category) === JSON.stringify(next.category)
+  );
+}
+const MemoizedCategoryView = React.memo(CategoryView, propsAreEqual);
+
+export default MemoizedCategoryView;
 
 const styles = StyleSheet.create({
   main: {
-    marginBottom: 15,
+    marginBottom: dimensions.viewHeight(15),
     backgroundColor: Colors.fullWhite,
-    paddingVertical: 5,
-    paddingHorizontal: 8,
-    marginRight: 10,
-    width: isTablet() ? '49%' : '100%',
+    paddingVertical: dimensions.viewHeight(5),
+    paddingHorizontal: dimensions.viewWidth(8),
+    marginRight: dimensions.viewWidth(10),
+    width: isTablet ? '49%' : '100%',
   },
   title: {
-    marginBottom: 10,
-    fontSize: 18,
+    marginBottom: dimensions.viewHeight(18),
+    fontSize: typography.fontSize.average,
   },
   fieldRow: {
     flexDirection: 'row',
     flex: 1,
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginVertical: 4,
+    marginVertical: dimensions.viewHeight(5),
+    height: dimensions.viewHeight(50),
   },
   fieldBtn: {
     backgroundColor: Colors.fullWhite20,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderRadius: 5,
-    margin: 5,
-    marginTop: 10,
+    borderRadius: dimensions.viewWidth(5),
+    margin: dimensions.viewWidth(5),
+    marginTop: dimensions.viewHeight(10),
   },
   fieldDeletedIcon: {
-    width: 24,
-    height: 24,
+    width: dimensions.viewWidth(24),
+    height: dimensions.viewHeight(24),
     tintColor: Colors.fullBlack,
-    marginRight: 5,
+  },
+  fieldDeletedIconView: {
+    height: dimensions.viewHeight(50),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: dimensions.viewWidth(5),
   },
   fieldBtnTitle: {
     textTransform: 'capitalize',
     color: Colors.sfpurple,
   },
-  flex: {flex: 1, marginRight: 5},
+  flex: {
+    flex: 1,
+    marginRight: dimensions.viewWidth(5),
+    height: dimensions.viewHeight(50),
+  },
   addNewAttributeBtn: {
-    marginVertical: 5,
+    marginVertical: dimensions.viewHeight(5),
   },
   addBtn: {
     color: Colors.sfpurple,
-    marginVertical: 15,
-    borderRadius: 4,
+    marginVertical: dimensions.viewHeight(5),
+    borderRadius: dimensions.viewWidth(4),
+  },
+  addBtn2: {
+    color: Colors.sfpurple,
+    borderRadius: dimensions.viewWidth(4),
+    height: dimensions.viewHeight(50),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: dimensions.viewHeight(4),
   },
   titleModelBtn: {
-    marginVertical: 5,
+    marginVertical: dimensions.viewHeight(5),
     color: Colors.fullWhite,
   },
   titleModelView: {
     color: Colors.fullWhite,
-    marginVertical: 5,
-    borderRadius: 4,
+    marginVertical: dimensions.viewHeight(5),
+    borderRadius: dimensions.viewWidth(4),
     backgroundColor: Colors.passionFruit,
   },
   row: {
@@ -200,9 +254,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   categoryDeletedIcon: {
-    width: 14,
-    height: 14,
+    width: dimensions.viewWidth(14),
+    height: dimensions.viewHeight(14),
     tintColor: Colors.sfpurple,
-    marginHorizontal: 15,
+    marginLeft: dimensions.viewWidth(25),
+    marginRight: dimensions.viewWidth(10),
   },
 });

@@ -1,17 +1,16 @@
 import {View, Text, StyleSheet} from 'react-native';
 import React from 'react';
-import {AppData} from '../lib/types';
+import {Category} from '../lib/types';
 import {useSelector} from 'react-redux';
-import {RootState} from '../store/configureStore';
 import _ from 'lodash';
 import {FlatList} from 'react-native-gesture-handler';
 import CategoryListView from './CategoryListView';
+import dimensions from '../utility/dimensions';
+import {getCategories} from '../selectors';
 
 const DashBoard = () => {
-  const storeData: AppData = useSelector((state: RootState) => state.appData);
-  const categoriesList = _.isEmpty(storeData?.categories)
-    ? []
-    : Object.keys(storeData?.categories);
+  const categories: Record<string, Category> = useSelector(getCategories);
+  const categoriesList = _.isEmpty(categories) ? [] : Object.keys(categories);
 
   const renderItem = ({item}: {item: string}) => {
     return (
@@ -21,8 +20,8 @@ const DashBoard = () => {
           route={{
             params: {
               categoryId: item,
-              name: storeData.categories[item].title,
-              titleField: storeData.categories[item].titleField || '',
+              name: categories[item].title,
+              titleField: categories[item].titleField || '',
             },
           }}
         />
@@ -45,7 +44,7 @@ const DashBoard = () => {
 const styles = StyleSheet.create({
   main: {
     flex: 1,
-    marginVertical: 15,
+    marginVertical: dimensions.viewHeight(15),
   },
 });
 

@@ -65,4 +65,14 @@ const AddNewFieldMenu = ({
     </Menu>
   );
 };
-export default AddNewFieldMenu;
+// export default AddNewFieldMenu;
+
+function propsAreEqual(prev: Props, next: Props) {
+  return (
+    JSON.stringify(prev.menus) === JSON.stringify(next.menus) &&
+    JSON.stringify(prev.title) === JSON.stringify(next.title)
+  );
+}
+const MemoizedAddNewFieldMenu = React.memo(AddNewFieldMenu, propsAreEqual);
+
+export default MemoizedAddNewFieldMenu;

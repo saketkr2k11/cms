@@ -1,15 +1,22 @@
 import {Image, Pressable, StyleSheet, Text, View} from 'react-native';
 import React from 'react';
 import {useDispatch, useSelector} from 'react-redux';
-import {AppData, DataType, DataTypeEnum} from '../lib/types';
-import {RootState} from '../store/configureStore';
+import {
+  AttributesMap,
+  AttributesValueMap,
+  Category,
+  DataTypeEnum,
+} from '../lib/types';
 import {FlatList} from 'react-native-gesture-handler';
 import {Colors} from '../lib/constants';
 import {Switch, TextInput} from 'react-native-paper';
 import {deleteSubItem, updateItemAttributeValue} from '../lib/actions';
 import DatePickerComponent from './DatePickerComponent';
 import _ from 'lodash';
-import {isTablet} from 'react-native-device-info';
+import dimensions, {isTablet} from '../utility/dimensions';
+import {getAttributesMap, getCategories, getSubList} from '../selectors';
+import moment from 'moment';
+import {typography} from '../utility/typography';
 
 type Props = {
   itemId: string;
@@ -19,7 +26,7 @@ type Props = {
 
 type Attribute = {
   title: string;
-  dataType: DataType;
+  dataType: string;
   value: string | number | boolean | Date | null;
   id: string;
 };
@@ -27,15 +34,19 @@ type Attribute = {
 const REG_EXP = new RegExp(/^\d+(?:\.\d\d?)?$/);
 const SubListCardView = (props: Props) => {
   const dispatch = useDispatch();
-  const storeData: AppData = useSelector((state: RootState) => state.appData);
+  const categories: Record<string, Category> = useSelector(getCategories);
+
+  const attributesMap: AttributesMap = useSelector(getAttributesMap);
+  const subItems: Record<string, AttributesValueMap> = useSelector(getSubList);
+
   const {itemId, titleFieldId, categoryId} = props;
   const attributes: Attribute[] = [];
-  storeData.categories[categoryId].attributesIdsList.forEach(attributeId => {
+  categories[categoryId].attributesIdsList.forEach((attributeId: string) => {
     attributes.push({
       id: attributeId,
-      title: storeData.attributesMap[attributeId].title,
-      dataType: storeData.attributesMap[attributeId].dataType,
-      value: storeData.subItems[itemId][attributeId],
+      title: attributesMap[attributeId].title || '',
+      dataType: attributesMap[attributeId].dataType,
+      value: subItems[itemId][attributeId],
     });
   });
 
@@ -121,13 +132,19 @@ const SubListCardView = (props: Props) => {
     return;
   };
 
-  const titleField = storeData?.subItems[itemId][titleFieldId];
+  const getTitleFieldText = () => {
+    const titleField = subItems[itemId][titleFieldId];
+    if (attributesMap[titleFieldId].dataType === 'date' && titleField != null) {
+      return moment(new Date(titleField.toString())).format('DD-MMM-YYYY');
+    }
+    return titleField == null || titleField === ''
+      ? 'Unnamed Title'
+      : titleField?.toString();
+  };
   return (
     <View style={styles.main}>
       <View style={styles.card}>
-        <Text style={styles.title}>
-          {_.isEmpty(titleField) ? 'Unnamed Title' : titleField?.toString()}
-        </Text>
+        <Text style={styles.title}>{getTitleFieldText()}</Text>
         <FlatList
           data={attributes}
           renderItem={renderCardItem}
@@ -151,38 +168,38 @@ export default SubListCardView;
 
 const styles = StyleSheet.create({
   main: {
-    marginVertical: 15,
-    marginRight: 8,
-    width: isTablet() ? '49%' : '100%',
+    marginVertical: dimensions.viewHeight(15),
+    marginRight: dimensions.viewWidth(8),
+    width: isTablet ? '49%' : '100%',
   },
   card: {
     backgroundColor: Colors.fullWhite,
-    padding: 8,
+    padding: dimensions.viewWidth(8),
   },
   title: {
-    fontSize: 18,
-    marginBottom: 5,
+    fontSize: typography.fontSize.average,
+    marginBottom: dimensions.viewHeight(5),
   },
   checkboxView: {flexDirection: 'row', alignItems: 'center'},
   checkboxViewWrapper: {
-    marginVertical: 2,
+    marginVertical: dimensions.viewHeight(2),
   },
   checkboxText: {
-    fontSize: 14,
-    marginLeft: 10,
+    fontSize: typography.fontSize.small,
+    marginLeft: dimensions.viewWidth(10),
   },
   cardItems: {
-    marginVertical: 2,
+    marginVertical: dimensions.viewHeight(2),
   },
   categoryDeletedIcon: {
-    width: 14,
-    height: 14,
+    width: dimensions.viewWidth(14),
+    height: dimensions.viewHeight(14),
     tintColor: Colors.sfpurple,
-    marginHorizontal: 15,
+    marginHorizontal: dimensions.viewWidth(15),
   },
   row: {
     flexDirection: 'row',
-    marginTop: 10,
+    marginTop: dimensions.viewHeight(10),
     alignItems: 'center',
   },
 });

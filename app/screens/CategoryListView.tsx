@@ -1,14 +1,15 @@
 import {View, Text, StyleSheet} from 'react-native';
 import React from 'react';
-import {AppData, Category} from '../lib/types';
+import {Category} from '../lib/types';
 import {Button} from 'react-native-paper';
 import {useDispatch, useSelector} from 'react-redux';
-import {RootState} from '../store/configureStore';
 import _ from 'lodash';
 import {addSubItemsToCategory} from '../lib/actions';
 import {FlatList} from 'react-native-gesture-handler';
 import SubListCardView from '../components/SubListCardView';
-import {isTablet} from 'react-native-device-info';
+import dimensions, {isTablet} from '../utility/dimensions';
+import {getCategories} from '../selectors';
+import {typography} from '../utility/typography';
 
 type Props = {
   route: {
@@ -23,10 +24,10 @@ type Props = {
 const CategoryListView = ({route}: Props) => {
   const dispatch = useDispatch();
   const categoryId = route?.params?.categoryId;
-  const storeData: AppData = useSelector((state: RootState) => state.appData);
-  const category: Category | null = _.isEmpty(storeData?.categories[categoryId])
+  const categories: Record<string, Category> = useSelector(getCategories);
+  const category: Category | null = _.isEmpty(categories[categoryId])
     ? null
-    : storeData?.categories[categoryId];
+    : categories[categoryId];
 
   const subItemsList = _.isEmpty(category) ? [] : category.subItemIds || [];
 
@@ -60,7 +61,7 @@ const CategoryListView = ({route}: Props) => {
         data={subItemsList}
         renderItem={renderItem}
         keyExtractor={item => item}
-        numColumns={isTablet() ? 2 : 1}
+        numColumns={isTablet ? 2 : 1}
       />
     </View>
   );
@@ -69,24 +70,24 @@ const CategoryListView = ({route}: Props) => {
 const styles = StyleSheet.create({
   main: {
     flex: 1,
-    marginHorizontal: 10,
+    marginHorizontal: dimensions.viewWidth(10),
   },
   addBtn: {
-    borderRadius: 4,
-    width: 170,
+    borderRadius: dimensions.viewWidth(4),
+    width: dimensions.viewWidth(170),
   },
   topHeaderTitle: {
-    fontSize: 24,
+    fontSize: typography.fontSize.title,
   },
   topHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginVertical: 5,
+    marginVertical: dimensions.viewWidth(5),
   },
   emptyLine: {
     alignSelf: 'center',
-    marginVertical: 20,
+    marginVertical: dimensions.viewWidth(20),
   },
 });
 

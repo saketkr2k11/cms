@@ -5,6 +5,7 @@ import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import moment from 'moment';
 import {Colors} from '../lib/constants';
 import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
+import dimensions from '../utility/dimensions';
 
 type Props = {
   onDateSelect: (dt: Date) => void;
@@ -54,13 +55,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    height: 40,
+    height: dimensions.viewHeight(40),
   },
   dateView: {
     backgroundColor: Colors.transparent,
-    height: 40,
+    height: dimensions.viewHeight(40),
   },
   main: {
-    marginBottom: 10,
+    marginBottom: dimensions.viewHeight(10),
   },
 });
